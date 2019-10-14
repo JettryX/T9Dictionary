@@ -1,13 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
+//using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Collections.Specialized;
+using System.Collections;
 
 namespace T9
 {
 
     class T9
     {
-        private Dictionary<string, string> dict;
+        private OrderedDictionary dict;
+        private IDictionaryEnumerator myEnum;
 
         public int Count
         {
@@ -19,15 +22,16 @@ namespace T9
  
         public  T9()
         {
-          dict = new Dictionary<string, string>();
+          dict = new OrderedDictionary();
         }
         public int Add(string word) // Функция добавления слова в словарь.
         {
             word = word.ToLower();
             string ResCode = GenerateCode(word);
-            if (!ResCode.Equals("0") && !dict.ContainsKey(word)) dict.Add(word, ResCode);
-            else if (dict.ContainsKey(word)) return -1;
+            if (!ResCode.Equals("0") && !dict.Contains(word)) dict.Add(word, ResCode);
+            else if (dict.Contains(word)) return -1;
             else return 0;
+            myEnum = dict.GetEnumerator();
             return 1;
         }
 
@@ -60,13 +64,24 @@ namespace T9
                 return 0; // Не подходящий символ
             }
  
-        public string GetWordCode(string word) // Функция для соответсвующего пользовательского кода слова.
+        public string GetWordCode(string word) // Функция поиска кода по слову.
         {
-            foreach(KeyValuePair<string,string> pair in dict)
+            /* foreach(KeyValuePair<string,string> pair in dict)
+             {
+                 if (pair.Key == word) return pair.Value;
+             }
+             return "0"; */
+            string temp = "0";
+            while (myEnum.MoveNext())
             {
-                if (pair.Key == word) return pair.Value;
+                if ((myEnum.Key).ToString() == word)
+                {
+                    temp = (myEnum.Value).ToString();
+                    myEnum = dict.GetEnumerator();
+                    return temp;
+                }                 
             }
-            return "0";
+            return temp;
         }
 
         public string[] GetWordFromCode(string code, int amount) // Функция получения слов на основе пользовательского ввода
@@ -75,13 +90,21 @@ namespace T9
             string[] matches = new string[amount];
             //Array.Clear(matches, 0, amount);
             
-            foreach(KeyValuePair<string,string> pair in dict)
+         /*   foreach(KeyValuePair<string,string> pair in dict)
             {
                 if (regex.IsMatch(pair.Value))
                 {
                     MatchSort(pair.Key, 0);
                 }
             }
+            return matches;
+        */
+            while (myEnum.MoveNext())
+            {
+                if (regex.IsMatch((myEnum.Value).ToString()))
+                    MatchSort((myEnum.Key).ToString(), 0);
+            }
+            myEnum = dict.GetEnumerator();
             return matches;
 
             void MatchSort(string str, int n) // Функция сортировки выборки слов на основе приоритета 
@@ -104,10 +127,15 @@ namespace T9
 
         public void ShowDictionary() // Отображение всего словаря с соотвествующими кодами пользовательского ввода
         {
-            foreach(KeyValuePair<string,string> pair in dict)
+            /* foreach(KeyValuePair<string,string> pair in dict)
+             {
+                 Console.WriteLine(pair.Key + '\t' + pair.Value);
+             } */
+            while (myEnum.MoveNext())
             {
-                Console.WriteLine(pair.Key + '\t' + pair.Value);
+                Console.WriteLine("{0, -25} {1}", myEnum.Key, myEnum.Value);
             }
+            myEnum = dict.GetEnumerator();
         }
     }
 }
